@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        input {
+            margin: 5px;
+            padding: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="presentPage">
+        <h2>Enter Present Classes</h2>
+        <div id="presentInputs"></div>
+        <button onclick="goToTotalPage()">Next</button>
+    </div>
+
+    <div class="container hidden" id="totalPage">
+        <h2>Enter Total Classes</h2>
+        <div id="totalInputs"></div>
+        <button onclick="calculateAttendance()">Calculate</button>
+    </div>
+
+    <div class="container hidden" id="resultPage">
+        <h2>Attendance Result</h2>
+        <p id="result"></p>
+        <canvas id="attendanceChart" width="200" height="200"></canvas>
+    </div>
+
+    <script>
+        const subjects = ["dlc", "pps", "FEEE", "FEEElab", "ENVS", "IENT", "English", "Maths", "Physics", "Physicslab"];
+        let presentData = {};
+        let totalData = {};
+
+        let presentDiv = document.getElementById("presentInputs");
+        let totalDiv = document.getElementById("totalInputs");
+
+        subjects.forEach(sub => {
+            presentDiv.innerHTML += `<label>${sub} Present: <input type='number' id='${sub}_present' min='0'></label><br>`;
+            totalDiv.innerHTML += `<label>${sub} Total: <input type='number' id='${sub}_total' min='0'></label><br>`;
+        });
+
+        function goToTotalPage() {
+            document.getElementById("presentPage").classList.add("hidden");
+            document.getElementById("totalPage").classList.remove("hidden");
+        }
+
+        function calculateAttendance() {
+            let totalClasses = 0, presentClasses = 0;
+            subjects.forEach(sub => {
+                let present = parseInt(document.getElementById(`${sub}_present`).value) || 0;
+                let total = parseInt(document.getElementById(`${sub}_total`).value) || 0;
+                presentData[sub] = present;
+                totalData[sub] = total;
+                presentClasses += present;
+                totalClasses += total;
+            });
+
+            if (totalClasses === 0) {
+                document.getElementById("result").innerText = "Please enter valid class data.";
+                return;
+            }
+
+            let attendance = (presentClasses / totalClasses) * 100;
+            let message = `Attended Classes: ${presentClasses}, Total Classes: ${totalClasses}, Attendance: ${attendance.toFixed(2)}%`;
+
+            if (attendance < 75) {
+                let count = 0;
+                while ((presentClasses + count) * 100 / (totalClasses + count) < 75) {
+                    count++;
+                }
+                message += `\nYou should attend ${count} more classes to reach 75%.`;
+            } else {
+                let count = 0;
+                while ((presentClasses * 100 / (totalClasses + count)) > 75) {
+                    count++;
+                }
+                message += `\nYou can bunk ${count - 1} classes before falling below 75%.`;
+            }
+
+            document.getElementById("result").innerText = message;
+            document.getElementById("totalPage").classList.add("hidden");
+            document.getElementById("resultPage").classList.remove("hidden");
+            renderChart(presentClasses, totalClasses - presentClasses);
+        }
+
+        function renderChart(present, absent) {
+            let ctx = document.getElementById("attendanceChart").getContext("2d");
+            new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: ["Present", "Absent"],
+                    datasets: [{
+                        data: [present, absent],
+                        backgroundColor: ["#28a745", "#dc3545"]
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>
