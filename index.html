@@ -7,32 +7,40 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
             text-align: center;
             padding: 20px;
+            color: white;
         }
         .container {
             background: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             display: inline-block;
+            color: black;
+            width: 50%;
         }
         input {
             margin: 5px;
-            padding: 5px;
+            padding: 8px;
+            width: 90%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
         button {
-            background: #007bff;
+            background: #28a745;
             color: white;
-            padding: 10px;
+            padding: 10px 20px;
             border: none;
             cursor: pointer;
             border-radius: 5px;
+            margin-top: 10px;
+            font-size: 16px;
         }
         button:hover {
-            background: #0056b3;
+            background: #218838;
         }
         #result {
             margin-top: 20px;
@@ -63,17 +71,35 @@
     </div>
 
     <script>
-        const subjects = ["dlc", "pps", "FEEE", "FEEElab", "ENVS", "IENT", "English", "Maths", "Physics", "Physicslab"];
-        let presentData = {};
-        let totalData = {};
+        const subjects = [
+            { id: "dlc", name: "Digital Logic and Circuits" },
+            { id: "pps", name: "Python Programming" },
+            { id: "FEEE", name: "Fundamentals of Electrical and Electronics Engineering" },
+            { id: "FEEElab", name: "FEEE Laboratory" },
+            { id: "ENVS", name: "Environmental Science" },
+            { id: "IENT", name: "Introduction to Entrepreneurship" },
+            { id: "English", name: "English Communication" },
+            { id: "Maths", name: "Mathematics" },
+            { id: "Physics", name: "Physics" },
+            { id: "Physicslab", name: "Physics Laboratory" }
+        ];
 
         let presentDiv = document.getElementById("presentInputs");
         let totalDiv = document.getElementById("totalInputs");
 
-        subjects.forEach(sub => {
-            presentDiv.innerHTML += `<label>${sub} Present: <input type='number' id='${sub}_present' min='0'></label><br>`;
-            totalDiv.innerHTML += `<label>${sub} Total: <input type='number' id='${sub}_total' min='0'></label><br>`;
+        subjects.forEach((sub, index) => {
+            presentDiv.innerHTML += `<label>${sub.name} Present: <input type='number' id='${sub.id}_present' min='0' onkeypress='handleEnter(event, ${index + 1}, "present")'></label><br>`;
+            totalDiv.innerHTML += `<label>${sub.name} Total: <input type='number' id='${sub.id}_total' min='0' onkeypress='handleEnter(event, ${index + 1}, "total")'></label><br>`;
         });
+
+        function handleEnter(event, index, type) {
+            if (event.key === "Enter") {
+                let inputs = document.querySelectorAll(`#${type}Inputs input`);
+                if (index < inputs.length) {
+                    inputs[index].focus();
+                }
+            }
+        }
 
         function goToTotalPage() {
             document.getElementById("presentPage").classList.add("hidden");
@@ -83,10 +109,8 @@
         function calculateAttendance() {
             let totalClasses = 0, presentClasses = 0;
             subjects.forEach(sub => {
-                let present = parseInt(document.getElementById(`${sub}_present`).value) || 0;
-                let total = parseInt(document.getElementById(`${sub}_total`).value) || 0;
-                presentData[sub] = present;
-                totalData[sub] = total;
+                let present = parseInt(document.getElementById(`${sub.id}_present`).value) || 0;
+                let total = parseInt(document.getElementById(`${sub.id}_total`).value) || 0;
                 presentClasses += present;
                 totalClasses += total;
             });
@@ -104,13 +128,10 @@
                 while ((presentClasses + count) * 100 / (totalClasses + count) < 75) {
                     count++;
                 }
-                message += `\nYou should attend ${count} more classes to reach 75%.`;
+                message += `\nYou need to attend ${count} more classes to maintain 75% attendance.`;
             } else {
-                let count = 0;
-                while ((presentClasses * 100 / (totalClasses + count)) > 75) {
-                    count++;
-                }
-                message += `\nYou can bunk ${count - 1} classes before falling below 75%.`;
+                let extraBunk = Math.floor((presentClasses - (0.75 * totalClasses)) / 0.75);
+                message += `\nGreat job! Your attendance is above 75%. You can miss up to ${extraBunk} more classes and still maintain 75%.`;
             }
 
             document.getElementById("result").innerText = message;
